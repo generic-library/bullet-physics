@@ -803,7 +803,7 @@ long _mindot_large( const float *vv, const float *vec, unsigned long count, floa
         
         // It is slightly faster to do this part in scalar code when count < 8. However, the common case for
         // this where it actually makes a difference is handled in the early out at the top of the function, 
-        // so it is less than a 1% difference here. I opted for improved code size, fewer branches and reduced 
+        // so it is less than a 1% difference here. I opted for improved code size, fewer branches and reduced
         // complexity, and removed it.
         
         dotmin = min;
@@ -884,7 +884,11 @@ static long _mindot_large_sel( const float *vv, const float *vec, unsigned long 
 
 
 
-#define vld1q_f32_aligned_postincrement( _ptr ) ({ float32x4_t _r; asm( "vld1.f32  {%0}, [%1, :128]!\n" : "=w" (_r), "+r" (_ptr) ); /*return*/ _r; })
+#if !defined __arm64__
+# define vld1q_f32_aligned_postincrement( _ptr ) ({ float32x4_t _r; asm( "vld1.f32 {%0}, [%1, :128]!\n" : "=w" (_r), "+r" (_ptr) ); /*return*/ _r; })
+#else
+# define vld1q_f32_aligned_postincrement( _ptr) ({ float32x4_t _r = ((float32x4_t*)(_ptr))[0]; (_ptr) = (const float*) ((const char*)(_ptr) + 16L); /*return*/ _r; })
+#endif
 
 
 long _maxdot_large_v0( const float *vv, const float *vec, unsigned long count, float *dotResult )
